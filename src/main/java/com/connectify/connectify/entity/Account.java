@@ -1,21 +1,18 @@
-package com.connectify.connectify.model;
+package com.connectify.connectify.entity;
 
+import com.connectify.connectify.enums.EAccountStatus;
 import com.connectify.connectify.enums.EGender;
-import com.connectify.connectify.enums.ERole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Table(name = "account")
+@Table(name = "accounts")
 @Entity
 public class Account {
     @Id
@@ -55,13 +52,29 @@ public class Account {
     private EGender gender;
 
     @Column(name = "created_at")
-    private Date createdAt;
+    private Date createdAt = new Date();
+
+    @Column(name = "updated_at")
+    private Date updatedAt;
+
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private EAccountStatus status;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "account_role",
+            name = "accounts_roles",
             joinColumns = @JoinColumn(name = "account_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "accounts_groups",
+            joinColumns = @JoinColumn(name = "account_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id")
+    )
+    private Set<Group> groups = new HashSet<>();
 }
+

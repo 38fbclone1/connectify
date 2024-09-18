@@ -1,6 +1,6 @@
 package com.connectify.connectify.repository;
 
-import com.connectify.connectify.model.Account;
+import com.connectify.connectify.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,7 +1,9 @@
 package com.connectify.connectify.exception;
 
 import com.connectify.connectify.enums.EError;
+import lombok.Getter;
 
+@Getter
 public class CustomException extends RuntimeException{
     private final EError error;
 
@@ -10,7 +12,4 @@ public class CustomException extends RuntimeException{
         this.error = error;
     }
 
-    public EError getError() {
-        return error;
-    }
 }

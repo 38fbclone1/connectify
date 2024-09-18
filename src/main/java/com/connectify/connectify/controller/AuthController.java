@@ -27,7 +27,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<CommonResponse<String>> register (@RequestBody EditAccountRequest request) {
-        System.out.println(request.getPhoneNumber());
         return accountService.createAccount(request);
     }
 }
