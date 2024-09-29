@@ -30,7 +30,7 @@ public class SecurityConfig {
     @Autowired
     JWTAuthenticationFilter jwtAuthenticationFilter;
 
-    public static String[] PUBLIC_END_POINTS = {"/api/v1/auth", "/api/v1/auth/*, /app, /app/*"};
+    public static String[] PUBLIC_END_POINTS = {"/api/v1/auth", "/api/v1/auth/*", "/ws", "/ws/*"};
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {

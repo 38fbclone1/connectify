@@ -23,6 +23,14 @@ public class CommentController {
     @MessageMapping("/posts/{postId}/comments")
     @SendTo("/posts/{postId}/comments")
     public ResponseEntity<?> create (@ModelAttribute CommonWebSocketEditRequest<EditCommentRequest, SearchCommentRequest> request) {
+        System.out.println("socket");
         return commentService.create(request);
+    }
+
+    @MessageMapping("/posts")
+    @SendTo("/posts")
+    public String test () {
+        System.out.println("socket");
+        return "websocket is working!";
     }
 }
