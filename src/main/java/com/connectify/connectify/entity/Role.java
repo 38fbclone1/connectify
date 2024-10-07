@@ -17,14 +17,14 @@ public class Role {
     @Enumerated(EnumType.STRING)
     private ERole name;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "roles_permisions",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id")
-    )
-    @Enumerated(EnumType.STRING)
-    private Set<Permission> permissions = new HashSet<>();
+//    @ManyToMany(fetch = FetchType.EAGER)
+//    @JoinTable(
+//            name = "roles_permisions",
+//            joinColumns = @JoinColumn(name = "role_id"),
+//            inverseJoinColumns = @JoinColumn(name = "permission_id")
+//    )
+//    @Enumerated(EnumType.STRING)
+//    private Set<Permission> permissions = new HashSet<>();
 
     @ManyToMany(mappedBy = "roles")
     private Set<Group> groups = new HashSet<>();

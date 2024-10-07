@@ -16,37 +16,37 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+//@Service
 public class PermissionService {
-    @Autowired
-    ModelMapper mapper;
-
-    @Autowired
-    PermissionRepository permissionRepository;
-
-    public ResponseEntity<?> get(String id) {
-        Optional<Permission> optionalPermission = permissionRepository.findById(id);
-        if (optionalPermission.isEmpty()) throw new CustomException(EError.BAD_REQUEST);
-        CommonResponse<?> response = new CommonResponse<>(200, optionalPermission.get(), "Get permission successfully!");
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    public ResponseEntity<?> create(EditPermissionRequest request) {
-        Permission permission = mapper.map(request, Permission.class);
-        permissionRepository.save(permission);
-        CommonResponse<?> response = new CommonResponse<>(200, "", "Create permission successfully!");
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    public ResponseEntity<?> update(Permission permission) {
-        permissionRepository.save(permission);
-        CommonResponse<?> response = new CommonResponse<>(200, "", "Create permission successfully!");
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    public ResponseEntity<?> delete(String id) {
-        permissionRepository.deleteById(id);
-        CommonResponse<?> response = new CommonResponse<>(200, "", "Delete permission successfully!");
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+//    @Autowired
+//    ModelMapper mapper;
+//
+//    @Autowired
+//    PermissionRepository permissionRepository;
+//
+//    public ResponseEntity<?> get(String id) {
+//        Optional<Permission> optionalPermission = permissionRepository.findById(id);
+//        if (optionalPermission.isEmpty()) throw new CustomException(EError.BAD_REQUEST);
+//        CommonResponse<?> response = new CommonResponse<>(200, optionalPermission.get(), "Get permission successfully!");
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
+//
+//    public ResponseEntity<?> create(EditPermissionRequest request) {
+//        Permission permission = mapper.map(request, Permission.class);
+//        permissionRepository.save(permission);
+//        CommonResponse<?> response = new CommonResponse<>(200, "", "Create permission successfully!");
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
+//
+//    public ResponseEntity<?> update(Permission permission) {
+//        permissionRepository.save(permission);
+//        CommonResponse<?> response = new CommonResponse<>(200, "", "Create permission successfully!");
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
+//
+//    public ResponseEntity<?> delete(String id) {
+//        permissionRepository.deleteById(id);
+//        CommonResponse<?> response = new CommonResponse<>(200, "", "Delete permission successfully!");
+//        return new ResponseEntity<>(response, HttpStatus.OK);
+//    }
 }

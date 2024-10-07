@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
+//@Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Data

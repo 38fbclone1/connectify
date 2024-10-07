@@ -20,6 +20,7 @@ public class Reaction {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Enumerated(EnumType.STRING)
     private EReactionType type;
 
     @ManyToOne

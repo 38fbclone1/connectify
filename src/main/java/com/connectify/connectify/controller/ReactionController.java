@@ -4,13 +4,10 @@ import com.connectify.connectify.DTO.request.EditReactionRequest;
 import com.connectify.connectify.service.ReactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(name = "/api/v1/reactions")
+@RequestMapping("/api/v1/reactions")
 public class ReactionController {
     @Autowired
     ReactionService reactionService;
@@ -18,5 +15,15 @@ public class ReactionController {
     @PostMapping
     public ResponseEntity<?> create(@RequestBody EditReactionRequest request) {
         return reactionService.create(request);
+    }
+
+    @PutMapping
+    public ResponseEntity<?> update(@RequestBody EditReactionRequest request) {
+        return reactionService.update(request);
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<?> delete(@PathVariable String id) {
+        return reactionService.delete(id);
     }
 }

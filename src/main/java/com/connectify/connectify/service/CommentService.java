@@ -14,6 +14,13 @@ import com.connectify.connectify.exception.CustomException;
 import com.connectify.connectify.repository.AccountRepository;
 import com.connectify.connectify.repository.CommentRepository;
 import com.connectify.connectify.repository.PostRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.Http;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,8 +28,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CommentService {
@@ -36,10 +47,16 @@ public class CommentService {
     AccountRepository accountRepository;
 
     @Autowired
+    AuthService authService;
+
+    @Autowired
     PostRepository postRepository;
 
     @Autowired
     ModelMapper mapper;
+
+    @Autowired
+    FirebaseService firebaseService;
 
     public void uploadFile (Comment comment, List<MultipartFile> multipartFiles) {
         if (multipartFiles.isEmpty()) return;
@@ -52,30 +69,28 @@ public class CommentService {
         }
     }
 
-    public ResponseEntity<?> create(CommonWebSocketEditRequest<EditCommentRequest, SearchCommentRequest> request) {
-        EditCommentRequest editCommentRequest = request.getEditRequest();
-        Comment comment = mapper.map(editCommentRequest, Comment.class);
+    public ResponseEntity<?> create(EditCommentRequest request) throws IOException {
 
-        Optional<Account> optionalAccount = accountRepository.findById(editCommentRequest.getCreatedBy());
-        if (optionalAccount.isEmpty()) throw new CustomException(EError.USER_NOT_EXISTED);
+        Comment comment = mapper.map(request, Comment.class);
 
-        Optional<Post> optionalPost = postRepository.findById(editCommentRequest.getPostId());
+        Optional<Post> optionalPost = postRepository.findById(request.getPostId());
         if (optionalPost.isEmpty()) throw new CustomException(EError.BAD_REQUEST);
 
-        comment.setCreatedBy(optionalAccount.get());
+        Account currentAccount = authService.getCurrentAccount();
+        comment.setCreatedBy(currentAccount);
         comment.setPost(optionalPost.get());
-        Comment newComment = commentRepository.save(comment);
-//        uploadFile(newComment, editCommentRequest.getMultipartFiles());
+        Comment createdComment = commentRepository.save(comment);
+        Account createdBy = createdComment.getCreatedBy();
+        PublicAccountResponse publicAccountResponse = mapper.map(createdBy, PublicAccountResponse.class);
+        CommentResponse commentResponse = mapper.map(createdComment, CommentResponse.class);
+        commentResponse.setCreatedBy(publicAccountResponse);
 
-        List<Comment> comments = search(request.getSearchRequest());
-        List<CommentResponse> commentResponses = comments.stream()
-                .map(a -> mapper.map(a, CommentResponse.class))
-                .toList();
-        PageResponse<CommentResponse> pageResponse = new PageResponse<>();
-        pageResponse.setRecordSize(commentResponses.size());
-        pageResponse.setList(commentResponses);
+        DatabaseReference databaseReference = firebaseService.getDatabaseIns("posts/");
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonComment = objectMapper.writeValueAsString(commentResponse);
+        databaseReference.child(request.getPostId()).child("comments").child(createdComment.getId()).setValueAsync(jsonComment);
 
-        CommonResponse<?> response = new CommonResponse<>(200, pageResponse, "Create comment successfully!");
+        CommonResponse<?> response = new CommonResponse<>(200, null, "Create comment successfully!");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -95,8 +110,11 @@ public class CommentService {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    private List<Comment> search (SearchCommentRequest request) {
-        return commentRepository.searchComment(request.getPage() * request.getPageSize(), request.getPageSize(), request.getSortBy(), request.getSortDir(), request.getKeyword(), request.getPostId(), request.getCreatedBy());
+    public ResponseEntity<?> search (SearchCommentRequest request) {
+        List<Comment> comments = commentRepository.searchComment(request.getPage() * request.getPageSize(), request.getPageSize(), request.getSortBy(), request.getSortDir(), request.getKeyword(), request.getPostId(), request.getCreatedBy());
+        List<CommentResponse> commentResponses = comments.stream().map(this::commentToCommentResponse).toList();
+        CommonResponse<?> response = new CommonResponse<>(200, commentResponses, "Search comments successfully!");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     private CommentResponse commentToCommentResponse (Comment comment) {

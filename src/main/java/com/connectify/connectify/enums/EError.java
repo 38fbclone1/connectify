@@ -9,6 +9,7 @@ public enum EError {
     USER_NOT_EXISTED("User is not existed!"),
     INCORRECT_PASSWORD("Password is not correct!"),
     UNAUTHENTICATED("Account is not authenticated!"),
+    UNAUTHORIZED("Account is not authenticated!"),
     ROLE_NOT_FOUND("Role not found!");
 
     private final String message;

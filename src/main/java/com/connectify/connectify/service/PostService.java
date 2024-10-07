@@ -7,9 +7,11 @@ import com.connectify.connectify.DTO.response.*;
 import com.connectify.connectify.entity.Account;
 import com.connectify.connectify.entity.File;
 import com.connectify.connectify.entity.Post;
+import com.connectify.connectify.entity.Reaction;
 import com.connectify.connectify.enums.EError;
 import com.connectify.connectify.exception.CustomException;
 import com.connectify.connectify.repository.PostRepository;
+import com.connectify.connectify.repository.ReactionRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,12 +36,18 @@ public class PostService {
     ModelMapper mapper;
 
     @Autowired
-    AccountService accountService;
+    AuthService authService;
+
+    @Autowired
+    ReactionRepository reactionRepository;
+
+    @Autowired
+    ReactionService reactionService;
 
     public ResponseEntity<?> create (EditPostRequest request) {
         CommonResponse<String> response;
         Post post = mapper.map(request, Post.class);
-        Account createdBy = accountService.getCurrentAccount();
+        Account createdBy = authService.getCurrentAccount();
         post.setCreatedBy(createdBy);
         Post createdPost = postRepository.save(post);
         List<MultipartFile> multipartFiles = request.getFiles();
@@ -59,10 +68,7 @@ public class PostService {
 
     public ResponseEntity<?> search (SearchPostRequest request) {
         List<Post> posts = postRepository.searchPost(request.getPage() * request.getPageSize(), request.getPageSize(), request.getSortBy(), request.getSortDir(), request.getKeyword(), request.getCreatedBy(), request.getAudience(), request.getGroup());
-        List<PostResponse> postResponses = new ArrayList<>();
-        for (Post post : posts) {
-            postResponses.add(postToPostResponse(post));
-        }
+        List<PostResponse> postResponses = posts.stream().map(this::postToPostResponse).toList();
         PageResponse<PostResponse> page = new PageResponse<>();
         page.setRecordSize(postResponses.size());
         page.setList(postResponses);
@@ -86,6 +92,20 @@ public class PostService {
         postResponse.setCreatedBy(publicAccountResponse);
         List<FileResponse> files = fileService.findByPostId(post.getId());
         postResponse.setFiles(files);
+        List<Reaction> reactions = reactionService.getReactionsByPostId(post.getId());
+        List<ReactionResponse> reactionResponses = reactions.stream().map(this::reactionToReactionResponse).toList();
+        postResponse.setReactions(reactionResponses);
         return postResponse;
     }
+
+
+    private ReactionResponse reactionToReactionResponse (Reaction reaction) {
+        return reactionService.reactionToReactionResponse(reaction);
+    }
+
+//    private List<ReactionResponse> getReactionsByPostId (String postId) {
+//        List<Reaction> reactions = reactionService.getReactionsByPostId(postId);
+//        return reactions.stream().map(this::reactionToReactionResponse).toList();
+//    }
+
 }

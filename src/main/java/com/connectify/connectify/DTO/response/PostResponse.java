@@ -19,6 +19,6 @@ public class PostResponse {
     private PublicAccountResponse createdBy;
     private Group group;
     private List<FileResponse> files;
-    private Integer reactionQuantity;
     private Integer commentQuantity;
+    private List<ReactionResponse> reactions;
 }

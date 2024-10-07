@@ -6,6 +6,7 @@ import com.connectify.connectify.DTO.response.LoginResponse;
 import com.connectify.connectify.DTO.response.PrivateAccountResponse;
 import com.connectify.connectify.JWT.JWTUtil;
 import com.connectify.connectify.enums.EError;
+import com.connectify.connectify.enums.ERole;
 import com.connectify.connectify.exception.CustomException;
 import com.connectify.connectify.entity.Account;
 import com.connectify.connectify.repository.AccountRepository;
@@ -14,6 +15,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -54,4 +57,23 @@ public class AuthService {
         }
     }
 
+
+    public Account getCurrentAccount() {
+        UsernamePasswordAuthenticationToken authenticationToken =
+                (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        if (authenticationToken != null && authenticationToken.getPrincipal() instanceof Account) {
+            return (Account) authenticationToken.getPrincipal();
+        }
+        return null;
+    }
+
+    public boolean checkIsCurrentAccount (String accountId) {
+        Account currentAccount = getCurrentAccount();
+        return currentAccount.getId().equals(accountId);
+    }
+
+    public boolean hasRole(String accountId, ERole role) {
+        return accountRepository.hasRole(accountId, role);
+    }
 }

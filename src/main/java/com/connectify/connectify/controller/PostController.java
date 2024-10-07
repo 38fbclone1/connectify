@@ -22,7 +22,6 @@ public class PostController {
 
     @PostMapping("/search")
     public ResponseEntity<?> search (@RequestBody SearchPostRequest request) {
-        System.out.println(request.getKeyword());
         return postService.search(request);
     }
 

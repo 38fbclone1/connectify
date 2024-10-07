@@ -28,4 +28,8 @@ public class File {
     @ManyToOne
     @JoinColumn(name = "comment_id")
     private Comment comment;
+
+    @ManyToOne
+    @JoinColumn(name = "message_id")
+    private Message message;
 }

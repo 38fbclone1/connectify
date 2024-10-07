@@ -10,27 +10,23 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-@Controller
+import java.io.IOException;
+
+@RestController
+@RequestMapping("api/v1/comments")
 public class CommentController {
     @Autowired
     CommentService commentService;
 
-    @MessageMapping("/posts/{postId}/comments")
-    @SendTo("/posts/{postId}/comments")
-    public ResponseEntity<?> create (@ModelAttribute CommonWebSocketEditRequest<EditCommentRequest, SearchCommentRequest> request) {
-        System.out.println("socket");
+    @PostMapping("")
+    public ResponseEntity<?> create (@RequestBody EditCommentRequest request) throws IOException {
         return commentService.create(request);
     }
 
-    @MessageMapping("/posts")
-    @SendTo("/posts")
-    public String test () {
-        System.out.println("socket");
-        return "websocket is working!";
+    @PostMapping("/search")
+    public ResponseEntity<?> search (@RequestBody SearchCommentRequest request) {
+        return commentService.search(request);
     }
 }

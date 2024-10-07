@@ -1,5 +1,6 @@
 package com.connectify.connectify.controller;
 
+import com.connectify.connectify.DTO.request.CommonSearchRequest;
 import com.connectify.connectify.DTO.response.CommonResponse;
 import com.connectify.connectify.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,5 +18,10 @@ public class AccountController {
     @GetMapping("/{id}")
     public ResponseEntity<CommonResponse<?>> getAccount (@PathVariable String id) {
         return accountService.getAccount(id);
+    }
+
+    @PostMapping("search")
+    public ResponseEntity<?> search (@RequestBody CommonSearchRequest request) {
+        return accountService.search(request);
     }
 }

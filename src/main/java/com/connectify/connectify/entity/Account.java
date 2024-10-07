@@ -2,6 +2,7 @@ package com.connectify.connectify.entity;
 
 import com.connectify.connectify.enums.EAccountStatus;
 import com.connectify.connectify.enums.EGender;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -76,5 +77,8 @@ public class Account {
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     private Set<Group> groups = new HashSet<>();
+
+    @ManyToMany(mappedBy = "members", fetch = FetchType.EAGER)
+    private Set<Messenger> messengers = new HashSet<>();
 }
 
