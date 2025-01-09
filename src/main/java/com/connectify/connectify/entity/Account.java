@@ -80,5 +80,7 @@ public class Account {
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.EAGER)
     private Set<Messenger> messengers = new HashSet<>();
+
+    private String devices;
 }
 

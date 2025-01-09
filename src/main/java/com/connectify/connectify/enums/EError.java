@@ -10,7 +10,11 @@ public enum EError {
     INCORRECT_PASSWORD("Password is not correct!"),
     UNAUTHENTICATED("Account is not authenticated!"),
     UNAUTHORIZED("Account is not authenticated!"),
-    ROLE_NOT_FOUND("Role not found!");
+    ROLE_NOT_FOUND("Role not found!"),
+    PHONE_NUMBER_BLOCKED("Phone number is blocked!"),
+    CANNOT_CREATE_TOKEN("Can't create token!"),
+    DEVICE_NOT_EXISTED("Device is not existed!"),
+    RSA_ERROR("Error when execute RSA");
 
     private final String message;
 

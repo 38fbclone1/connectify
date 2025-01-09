@@ -6,4 +6,6 @@ import lombok.Data;
 public class LoginResponse {
     private String token;
     private PrivateAccountResponse data;
+    private boolean authenticated;
+    private boolean otpAuthenticated;
 }

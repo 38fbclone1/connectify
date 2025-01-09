@@ -2,10 +2,11 @@ package com.connectify.connectify.service;
 
 import com.connectify.connectify.DTO.request.AuthenticationRequest;
 import com.connectify.connectify.DTO.request.EditAccountRequest;
-import com.connectify.connectify.DTO.response.CommonResponse;
-import com.connectify.connectify.DTO.response.LoginResponse;
-import com.connectify.connectify.DTO.response.PrivateAccountResponse;
+import com.connectify.connectify.DTO.request.GetOtpRequest;
+import com.connectify.connectify.DTO.request.VerifyOtpRequest;
+import com.connectify.connectify.DTO.response.*;
 import com.connectify.connectify.JWT.JWTUtil;
+import com.connectify.connectify.entity.PhoneNumberStatus;
 import com.connectify.connectify.enums.EError;
 import com.connectify.connectify.enums.ERole;
 import com.connectify.connectify.exception.CustomException;
@@ -21,7 +22,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class AuthService {
@@ -37,24 +40,62 @@ public class AuthService {
     @Autowired
     JWTUtil jwtUtil;
 
+    @Autowired
+    PhoneNumberStatusService phoneNumberStatusService;
+
     public ResponseEntity<CommonResponse<?>> authenticate (AuthenticationRequest request) {
-        Optional<Account> optionalAccount = accountRepository.findByPhoneNumber(request.getPhoneNumber());
-        if (optionalAccount.isEmpty()) throw new CustomException(EError.USER_NOT_EXISTED);
-        Account account = optionalAccount.get();
+        System.out.println(accountRepository.existsByPhoneNumber(request.getPhoneNumber()));
+        Account account = accountRepository.findByPhoneNumber(request.getPhoneNumber()).orElse(null);
+        if (account == null) throw new CustomException(EError.USER_NOT_EXISTED);
 
         boolean isAuthenticated = passwordEncoder.matches(request.getPassword(), account.getPassword());
         if (!isAuthenticated) throw new CustomException(EError.INCORRECT_PASSWORD);
+        LoginResponse loginResponse = new LoginResponse();
+        if (account.getDevices() != null && !account.getDevices().isEmpty()) {
+            if (checkDeviceExisted(account.getDevices(), request.getDeviceId())) {
+                try {
+                    String token = jwtUtil.generateToken(account);
+                    loginResponse.setOtpAuthenticated(true);
+                    loginResponse.setAuthenticated(true);
+                    loginResponse.setToken(token);
+                    CommonResponse<LoginResponse> response = new CommonResponse<>(200, loginResponse, "Login successfully!");
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                } catch (JOSEException e) {
+                    throw new CustomException(EError.CANNOT_CREATE_TOKEN);
+                }
+            }
+        }
+        loginResponse.setAuthenticated(true);
+        CommonResponse<LoginResponse> response = new CommonResponse<>(200, loginResponse, "Login successfully!");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
+    public boolean checkDeviceExisted (String devices, String deviceId) {
+        if (deviceId == null || deviceId.isEmpty()) return false;
+        if (devices == null || devices.isEmpty()) throw new CustomException(EError.BAD_REQUEST);
+        List<String> deviceList = List.of(devices.split(";"));
+        return deviceList.contains(deviceId);
+    }
+
+    public ResponseEntity<?> getOtp (GetOtpRequest request) {
+        GetOtpResponse getOtpResponse = phoneNumberStatusService.getOtp(request);
+        CommonResponse<?> response = new CommonResponse<>(200, getOtpResponse,"Get otp successfully!");
+        return ResponseEntity.ok(response);
+    }
+
+    public ResponseEntity<?> verifyOtp (VerifyOtpRequest request) {
         try {
-            String token = jwtUtil.generateToken(account);
-            PrivateAccountResponse accountResponse = mapper.map(account, PrivateAccountResponse.class);
-            LoginResponse loginResponse = new LoginResponse();
-            loginResponse.setToken(token);
-            loginResponse.setData(accountResponse);
-            CommonResponse<LoginResponse> response = new CommonResponse<>(200, loginResponse, "Login successfully!");
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            VerifyOtpResponse verifyOtpResponse = phoneNumberStatusService.verifyOtp(request);
+            if (verifyOtpResponse.isCorrect()) {
+                Account account = accountRepository.findByPhoneNumber(request.getPhoneNumber()).orElse(null);
+                if (account == null) throw new CustomException(EError.USER_NOT_EXISTED);
+                String token = jwtUtil.generateToken(account);
+                verifyOtpResponse.setToken(token);
+            }
+            CommonResponse<?> response = new CommonResponse<>(200, verifyOtpResponse,"Get otp successfully!");
+            return ResponseEntity.ok(response);
         } catch (JOSEException e) {
-            throw new RuntimeException(e);
+            throw new CustomException(EError.CANNOT_CREATE_TOKEN);
         }
     }
 
@@ -71,10 +112,6 @@ public class AuthService {
     public boolean checkIsCurrentAccount (String accountId) {
         Account currentAccount = getCurrentAccount();
         return currentAccount.getId().equals(accountId);
-    }
-
-    public boolean hasRole(String accountId, ERole role) {
-        return accountRepository.hasRole(accountId, role);
     }
 
 

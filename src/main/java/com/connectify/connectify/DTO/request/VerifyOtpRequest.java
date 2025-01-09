@@ -3,8 +3,7 @@ package com.connectify.connectify.DTO.request;
 import lombok.Data;
 
 @Data
-public class AuthenticationRequest {
+public class VerifyOtpRequest {
     private String phoneNumber;
-    private String password;
-    private String deviceId;
+    private String otp;
 }
