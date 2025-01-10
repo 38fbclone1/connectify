@@ -44,7 +44,6 @@ public class AuthService {
     PhoneNumberStatusService phoneNumberStatusService;
 
     public ResponseEntity<CommonResponse<?>> authenticate (AuthenticationRequest request) {
-        System.out.println(accountRepository.existsByPhoneNumber(request.getPhoneNumber()));
         Account account = accountRepository.findByPhoneNumber(request.getPhoneNumber()).orElse(null);
         if (account == null) throw new CustomException(EError.USER_NOT_EXISTED);
 

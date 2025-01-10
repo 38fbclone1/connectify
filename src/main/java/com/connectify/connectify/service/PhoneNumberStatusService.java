@@ -48,11 +48,11 @@ public class PhoneNumberStatusService {
         String otp = String.format("%06d", random.nextInt(1000000));
 
         PhoneNumberStatus phoneNumberStatus = getPhoneNumberStatus(request.getPhoneNumber());
-        if (phoneNumberStatus != null && phoneNumberStatus.getBlockedTime() != null && phoneNumberStatus.getBlockedTime().after(new Date())) throw new CustomException(EError.PHONE_NUMBER_BLOCKED);
+        if (phoneNumberStatus != null&& phoneNumberStatus.getRemainResent() == 0 && phoneNumberStatus.getBlockedTime() != null && phoneNumberStatus.getBlockedTime().after(new Date())) throw new CustomException(EError.PHONE_NUMBER_BLOCKED);
         Account account = accountService.getAccountByPhoneNumber(request.getPhoneNumber());
         if (account == null) throw new CustomException(EError.USER_NOT_EXISTED);
 
-        String emailBody = "Mã OTP của bạn là: " + otp;
+        String emailBody = "Mã OTP của bạn là: " + otp +" , mã sẽ có hiệu lực trong 5p";
         String emailSubject = "Connectify";
         emailService.sendEmail(account.getEmail(), emailSubject, emailBody);
 
@@ -67,9 +67,11 @@ public class PhoneNumberStatusService {
         phoneNumberStatus.setRemainRetried(maxRetry);
         phoneNumberStatus.setOtp(otp);
         phoneNumberStatus.setOtpExpiryTime(dateUtils.addSeconds(new Date(), 300));
+        phoneNumberStatus.setBlockedTime(dateUtils.addSeconds(new Date(), 7200));
         phoneNumberStatusRepository.save(phoneNumberStatus);
         GetOtpResponse response = new GetOtpResponse();
         response.setRemainResent(phoneNumberStatus.getRemainResent());
+        response.setRemainRetried(maxRetry);
         return response;
     }
 

@@ -48,12 +48,6 @@ public class AccountService {
     @Autowired
     RelationshipService relationshipService;
 
-    @Value("${RSA.PRIVATE_KEY}")
-    private String RSA_PRIVATE_KEY;
-
-    @Value("${RSA.PRIVATE_KEY}")
-    private String RSA_PUBLIC_KEY;
-
     private BCryptPasswordEncoder passwordEncoder;
 
     AccountService() {

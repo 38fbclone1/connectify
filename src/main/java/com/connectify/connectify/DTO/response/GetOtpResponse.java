@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class GetOtpResponse {
     private int remainResent;
+    private int remainRetried;
 }
