@@ -9,6 +9,7 @@ import com.connectify.connectify.entity.PhoneNumberStatus;
 import com.connectify.connectify.enums.EError;
 import com.connectify.connectify.exception.CustomException;
 import com.connectify.connectify.repository.PhoneNumberStatusRepository;
+import com.connectify.connectify.util.AESUtils;
 import com.connectify.connectify.util.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +40,12 @@ public class PhoneNumberStatusService {
     @Value("${OTP.MAX_RETRY}")
     private int maxRetry;
 
+    private AESUtils aesUtils;
+
+    PhoneNumberStatusService () {
+        this.aesUtils = new AESUtils();
+    }
+
     public PhoneNumberStatus getPhoneNumberStatus(String phoneNumber) {
         return phoneNumberStatusRepository.findById(phoneNumber).orElse(null);
     }
@@ -48,13 +55,13 @@ public class PhoneNumberStatusService {
         String otp = String.format("%06d", random.nextInt(1000000));
 
         PhoneNumberStatus phoneNumberStatus = getPhoneNumberStatus(request.getPhoneNumber());
-        if (phoneNumberStatus != null&& phoneNumberStatus.getRemainResent() == 0 && phoneNumberStatus.getBlockedTime() != null && phoneNumberStatus.getBlockedTime().after(new Date())) throw new CustomException(EError.PHONE_NUMBER_BLOCKED);
+        if (phoneNumberStatus != null && phoneNumberStatus.getRemainResent() == 0 && phoneNumberStatus.getBlockedTime() != null && phoneNumberStatus.getBlockedTime().after(new Date())) throw new CustomException(EError.PHONE_NUMBER_BLOCKED);
         Account account = accountService.getAccountByPhoneNumber(request.getPhoneNumber());
         if (account == null) throw new CustomException(EError.USER_NOT_EXISTED);
 
         String emailBody = "Mã OTP của bạn là: " + otp +" , mã sẽ có hiệu lực trong 5p";
         String emailSubject = "Connectify";
-        emailService.sendEmail(account.getEmail(), emailSubject, emailBody);
+        emailService.sendEmail(aesUtils.decrypt(account.getEmail()), emailSubject, emailBody);
 
         if (phoneNumberStatus == null) {
             phoneNumberStatus = new PhoneNumberStatus();
@@ -65,7 +72,7 @@ public class PhoneNumberStatusService {
             phoneNumberStatus.setRemainResent(remainResent);
         }
         phoneNumberStatus.setRemainRetried(maxRetry);
-        phoneNumberStatus.setOtp(otp);
+        phoneNumberStatus.setOtp(aesUtils.encrypt(otp));
         phoneNumberStatus.setOtpExpiryTime(dateUtils.addSeconds(new Date(), 300));
         phoneNumberStatus.setBlockedTime(dateUtils.addSeconds(new Date(), 7200));
         phoneNumberStatusRepository.save(phoneNumberStatus);
@@ -85,7 +92,7 @@ public class PhoneNumberStatusService {
             response.setRemainResent(phoneNumberStatus.getRemainResent());
             return response;
         }
-        boolean isOptCorrect = phoneNumberStatus.getOtp().equals(request.getOtp()) && phoneNumberStatus.getOtpExpiryTime().after(new Date());
+        boolean isOptCorrect = aesUtils.decrypt(phoneNumberStatus.getOtp()).equals(request.getOtp()) && phoneNumberStatus.getOtpExpiryTime().after(new Date());
         if (isOptCorrect) {
             phoneNumberStatus.setRemainRetried(maxRetry);
             phoneNumberStatus.setRemainResent(maxResend);

@@ -13,6 +13,7 @@ import com.connectify.connectify.enums.EError;
 import com.connectify.connectify.exception.CustomException;
 import com.connectify.connectify.repository.MessageRepository;
 import com.connectify.connectify.repository.MessengerRepository;
+import com.connectify.connectify.util.AESUtils;
 import com.google.firebase.database.DatabaseReference;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,12 @@ public class MessageService {
     @Autowired
     CommonService commonService;
 
+    AESUtils aesUtils;
+
+    MessageService () {
+        this.aesUtils = new AESUtils();
+    }
+
     public ResponseEntity<?> create (EditMessageRequest request) {
         Optional<Messenger> optionalMessenger = messengerRepository.findById(request.getMessengerId());
         if (optionalMessenger.isEmpty()) throw new CustomException(EError.BAD_REQUEST);
@@ -59,9 +66,10 @@ public class MessageService {
         message.setCreatedBy(currentAccount);
         message.setCreatedAt(new Date());
         message.setMessenger(messenger);
-        message.setContent(request.getContent());
+        message.setContent(aesUtils.encrypt(request.getContent()));
         Message createdMessage = messageRepository.save(message); // tạo tin nhắn
 
+//        createdMessage.setContent(aesUtils.decrypt(createdMessage.getContent()));
         String destination = "/topic/messengers/" + request.getMessengerId() + "/messages";
         messagingTemplate.convertAndSend(destination, messageToMessageResponse(createdMessage)); // lấy đường dẫn: kênh
 
@@ -83,6 +91,7 @@ public class MessageService {
     private MessageResponse messageToMessageResponse (Message message) {
         MessageResponse messageResponse = mapper.map(message, MessageResponse.class);
         messageResponse.setMessengerId(message.getMessenger().getId());
+        messageResponse.setContent(aesUtils.decrypt(messageResponse.getContent()));
         PublicAccountResponse accountResponse = mapper.map(message.getCreatedBy(), PublicAccountResponse.class);
         messageResponse.setCreatedBy(accountResponse);
         return messageResponse;

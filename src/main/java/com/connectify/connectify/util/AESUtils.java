@@ -1,6 +1,7 @@
 package com.connectify.connectify.util;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -15,6 +16,8 @@ import static com.connectify.connectify.enums.Static.FIXED_IV;
 
 @Service
 public class AESUtils {
+    @Value("${AES.KEY}")
+    private String base64Key;
 
     private static final String AES = "AES";
     private static final String AES_GCM_NO_PADDING = "AES/GCM/NoPadding";
@@ -22,14 +25,11 @@ public class AESUtils {
     private static final int GCM_TAG_LENGTH = 16; // Kích thước Tag Authentication (16 bytes)
     private static final int AES_KEY_SIZE = 256; // Kích thước khóa AES (256 bits)
 
-    private SecretKey secretKey;
+    private final SecretKey secretKey;
 
     public AESUtils() {
-        this.secretKey = generateKey();
-    }
-
-    public AESUtils(String key) {
-        this.secretKey = decodeKeyFromBase64(key);
+        System.out.println(base64Key);
+        this.secretKey = decodeKeyFromBase64("q2ert0yu3iopasdf5gvzjl");
     }
 
     // Sinh SecretKey ngẫu nhiên
@@ -47,7 +47,7 @@ public class AESUtils {
     public String encrypt(String plainText) {
         try {
             Cipher cipher = Cipher.getInstance(AES_GCM_NO_PADDING);
-            byte[] iv = generateIV();
+            byte[] iv = generateIV(); // Initialization Vector
             GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
 
@@ -69,6 +69,10 @@ public class AESUtils {
 
             Cipher cipher = Cipher.getInstance(AES_GCM_NO_PADDING);
             GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
+            // GCM parameter spec:
+            //      - Xác định độ dài của Tag Authentication
+            //      - Cung cấp giá trị IV
+            //      - Đảm bảo an toàn trong mã hóa và giải mã
             cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
 
             byte[] plainText = cipher.doFinal(cipherText);
@@ -78,7 +82,7 @@ public class AESUtils {
         }
     }
 
-    // Sinh IV ngẫu nhiên
+    // Sinh IV
     private byte[] generateIV() {
         return FIXED_IV;
     }
@@ -105,10 +109,6 @@ public class AESUtils {
         return cipherText;
     }
 
-    // Chuyển SecretKey sang Base64
-    public String encodeKeyToBase64() {
-        return Base64.getEncoder().encodeToString(secretKey.getEncoded());
-    }
 
     // Tạo SecretKey từ Base64
     private SecretKey decodeKeyFromBase64(String base64Key) {

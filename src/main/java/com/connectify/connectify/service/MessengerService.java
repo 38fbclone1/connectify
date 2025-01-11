@@ -12,6 +12,7 @@ import com.connectify.connectify.enums.EMessengerType;
 import com.connectify.connectify.exception.CustomException;
 import com.connectify.connectify.repository.AccountRepository;
 import com.connectify.connectify.repository.MessengerRepository;
+import com.connectify.connectify.util.AESUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,12 @@ public class MessengerService {
 
     @Autowired
     SimpMessagingTemplate messagingTemplate;
+
+    AESUtils aesUtils;
+
+    MessengerService () {
+        this.aesUtils = new AESUtils();
+    }
 
     private String p_create(EditMessengerRequest request) {
         if (request.getType().equals(EMessengerType.GROUP) && request.getMembers().size() < 2) throw new CustomException(EError.BAD_REQUEST);

@@ -7,6 +7,7 @@ import com.connectify.connectify.exception.CustomException;
 import com.connectify.connectify.entity.Account;
 import com.connectify.connectify.repository.AccountRepository;
 import com.connectify.connectify.repository.RoleRepository;
+import com.connectify.connectify.util.AESUtils;
 import com.connectify.connectify.util.RSAUtils;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -48,10 +49,13 @@ public class AccountService {
     @Autowired
     RelationshipService relationshipService;
 
+    AESUtils aesUtils;
+
     private BCryptPasswordEncoder passwordEncoder;
 
     AccountService() {
         this.passwordEncoder = new BCryptPasswordEncoder();
+        this.aesUtils = new AESUtils();
     }
 
     public ResponseEntity<?> saveDevice (EditDeviceRequest request) {
@@ -95,10 +99,10 @@ public class AccountService {
         if (accountRepository.existsByIdentificationNumber(editAccountRequest.getIdentificationNumber()))
             throw  new CustomException(EError.EXISTED_BY_IDENTIFICATION_NUMBER);
 
-        String encodedEmail = rsaUtils.encrypt(editAccountRequest.getEmail());
-        String encodedIdentificationNumber = rsaUtils.encrypt(editAccountRequest.getIdentificationNumber());
-        String encodedFullName = rsaUtils.encrypt(editAccountRequest.getFullName());
-        String encodedAddress = rsaUtils.encrypt(editAccountRequest.getAddress());
+        String encodedEmail = aesUtils.encrypt(editAccountRequest.getEmail());
+        String encodedIdentificationNumber = aesUtils.encrypt(editAccountRequest.getIdentificationNumber());
+        String encodedFullName = aesUtils.encrypt(editAccountRequest.getFullName());
+        String encodedAddress = aesUtils.encrypt(editAccountRequest.getAddress());
         String encodedPassword = passwordEncoder.encode(editAccountRequest.getPassword());
 
         Account newAccount = modelMapper.map(editAccountRequest, Account.class);
@@ -119,7 +123,11 @@ public class AccountService {
         Optional<Account> optionalAccount = accountRepository.findById(id);
         if (optionalAccount.isEmpty()) throw new CustomException(EError.BAD_REQUEST);
         Account account = optionalAccount.get();
-        System.out.println(rsaUtils.decrypt(account.getEmail()));
+        account.setEmail(aesUtils.decrypt(account.getEmail()));
+        account.setFullName(aesUtils.decrypt(account.getFullName()));
+        account.setIdentificationNumber(aesUtils.decrypt(account.getIdentificationNumber()));
+        account.setAddress(aesUtils.decrypt(account.getAddress()));
+
         Account currentAccount = authService.getCurrentAccount();
         CommonResponse<?> response;
         if (account.getId().equals(currentAccount.getId())) {
